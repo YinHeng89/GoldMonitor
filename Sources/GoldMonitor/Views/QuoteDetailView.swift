@@ -157,7 +157,9 @@ enum HistoryRange: String, CaseIterable, Identifiable {
         case .day: return 86_400
         case .week: return 604_800
         case .month: return 2_592_000
-        case .all: return TimeInterval.greatestFiniteMagnitude
+        // greatestFiniteMagnitude 减去后会得到非法 Date（description 为空），
+        // 用「现在距 Date.distantPast 的秒数」得到合法且覆盖全量数据的 cutoff。
+        case .all: return Date().timeIntervalSince(Date.distantPast)
         }
     }
 }
