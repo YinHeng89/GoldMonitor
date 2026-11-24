@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum SidebarItem: String, CaseIterable, Identifiable {
+enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
     case overview
     case london
     case icbc
@@ -35,14 +35,17 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 
 struct ContentView: View {
     @EnvironmentObject private var store: MarketStore
-    @State private var selection: SidebarItem = .overview
+    @State private var selection: SidebarItem? = .overview
 
     var body: some View {
         NavigationSplitView {
-            List(SidebarItem.allCases, selection: $selection) { item in
-                Label(item.title, systemImage: item.icon)
-                    .font(.system(size: 13.5, weight: .medium))
-                    .padding(.vertical, 4)
+            List(SidebarItem.allCases, id: \.self, selection: $selection) { item in
+                NavigationLink(value: item) {
+                    Label(item.title, systemImage: item.icon)
+                        .font(.system(size: 13.5, weight: .medium))
+                        .padding(.vertical, 4)
+                }
+                .buttonStyle(.plain)
             }
             .listStyle(.sidebar)
             .navigationTitle("Gold Monitor")
@@ -51,6 +54,7 @@ struct ContentView: View {
             detailView
                 .frame(minWidth: 680)
         }
+        .navigationSplitViewStyle(.balanced)
         .background(Theme.background)
         .preferredColorScheme(colorScheme)
         .task {
@@ -68,6 +72,7 @@ struct ContentView: View {
         case .alerts: AlertView()
         case .history: HistoryView()
         case .settings: SettingsView()
+        case nil: DashboardView()
         }
     }
 
