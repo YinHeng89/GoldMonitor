@@ -146,6 +146,7 @@ struct SettingsView: View {
             .padding(26)
         }
         .background(Theme.background)
+        .tint(Theme.gold)
     }
 
     private func settingHeader(_ title: String, icon: String) -> some View {

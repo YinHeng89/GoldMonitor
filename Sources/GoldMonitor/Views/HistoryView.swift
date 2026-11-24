@@ -91,5 +91,6 @@ struct HistoryView: View {
         }
         .padding(26)
         .background(Theme.background)
+        .tint(Theme.gold)
     }
 }

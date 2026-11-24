@@ -86,6 +86,7 @@ struct ContentView: View {
         }
         .navigationSplitViewStyle(.balanced)
         .background(Theme.background)
+        .tint(Theme.gold)
         .preferredColorScheme(colorScheme)
         .task {
             await store.enableNotificationsIfNeeded()

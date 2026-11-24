@@ -93,6 +93,7 @@ struct QuoteDetailView: View {
             .padding(26)
         }
         .background(Theme.background)
+        .tint(Theme.gold)
     }
 
     private var metrics: some View {
