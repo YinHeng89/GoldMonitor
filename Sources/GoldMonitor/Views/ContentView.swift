@@ -39,28 +39,45 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(SidebarItem.allCases, id: \.self, selection: $selection) { item in
-                let selected = item == selection
-                NavigationLink(value: item) {
-                    Label {
-                        Text(item.title)
-                            .font(.system(size: 13.5, weight: selected ? .semibold : .medium))
-                    } icon: {
-                        Image(systemName: item.icon)
-                            .font(.system(size: 13.5, weight: .semibold))
+            ScrollView {
+                LazyVStack(spacing: 6) {
+                    ForEach(SidebarItem.allCases) { item in
+                        let selected = item == selection
+                        Button {
+                            selection = item
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: item.icon)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Theme.gold.opacity(selected ? 1 : 0.85))
+                                    .frame(width: 20, alignment: .center)
+                                Text(item.title)
+                                    .font(.system(size: 13.5, weight: selected ? .semibold : .medium))
+                                    .foregroundStyle(.primary)
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 9)
+                            .background {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(selected ? Theme.gold.opacity(0.16) : Color.clear)
+                            }
+                            .overlay(alignment: .leading) {
+                                if selected {
+                                    RoundedRectangle(cornerRadius: 1.5)
+                                        .fill(Theme.gold)
+                                        .frame(width: 3, height: 18)
+                                        .padding(.leading, 4)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .foregroundStyle(Theme.gold.opacity(selected ? 1 : 0.72))
-                    .padding(.vertical, 5)
                 }
-                .buttonStyle(.plain)
-                .listRowBackground(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(selected ? Theme.gold.opacity(0.12) : Color.clear)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
             }
-            .listStyle(.sidebar)
             .navigationTitle("Gold Monitor")
             .frame(minWidth: 190)
         } detail: {
