@@ -100,14 +100,14 @@ struct ContentView: View {
     @ViewBuilder
     private var detailView: some View {
         switch selection {
-        case .overview: DashboardView()
+        case .overview: DashboardView(onOpenHoldings: { selection = .holdings })
         case .london: QuoteDetailView(kind: .london)
         case .icbc: QuoteDetailView(kind: .icbc)
         case .holdings: HoldingsView()
         case .alerts: AlertView()
         case .history: HistoryView()
         case .settings: SettingsView()
-        case nil: DashboardView()
+        case nil: DashboardView(onOpenHoldings: { selection = .holdings })
         }
     }
 

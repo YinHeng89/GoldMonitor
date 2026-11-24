@@ -1,17 +1,25 @@
 import SwiftUI
+import SwiftData
 
 struct DashboardView: View {
     @EnvironmentObject private var store: MarketStore
+    @Query(sort: \GoldHolding.createdAt, order: .reverse) private var holdings: [GoldHolding]
+    var onOpenHoldings: (() -> Void)? = nil
+
+    private var summary: HoldingSummary {
+        HoldingSummary.make(holdings, quotes: store.quotes)
+    }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 18) {
                 header
+                holdingsOverview
                 LazyVGrid(columns: [GridItem(.flexible(minimum: 320), spacing: 18), GridItem(.flexible(minimum: 320))], spacing: 18) {
                     QuoteCard(kind: .london)
                     QuoteCard(kind: .icbc)
                 }
-                diagnostics
+                statusBar
                 Spacer(minLength: 12)
             }
             .padding(26)
@@ -43,43 +51,90 @@ struct DashboardView: View {
         }
     }
 
-    private var diagnostics: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("数据状态与诊断", systemImage: "waveform.path.ecg")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Theme.text)
-                Spacer()
-                Text("刷新间隔 \(store.settings.refreshInterval) 秒 · \(store.settings.autoRefresh ? "自动刷新已开启" : "自动刷新已关闭")")
-                    .font(.system(size: 10.5))
-                    .foregroundStyle(Theme.muted)
-            }
-            ForEach(GoldQuote.Kind.allCases) { kind in
-                HStack(spacing: 10) {
-                    StatusBadge(kind: kind)
-                    Text(kind.shortName)
-                        .font(.system(size: 12, weight: .medium))
+    private var holdingsOverview: some View {
+        Button {
+            onOpenHoldings?()
+        } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "briefcase")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.gold)
+                    Text("我的持仓")
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Theme.text)
-                        .frame(width: 76, alignment: .leading)
-                    Text(kind == .london ? store.londonProviderName() : "工行官网 AsynGetDataServlet")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.secondary)
-                        .lineLimit(1)
                     Spacer()
-                    if let error = store.errors[kind] {
-                        Text(error)
-                            .font(.system(size: 10.5))
-                            .foregroundStyle(Theme.up)
-                            .lineLimit(1)
-                    } else {
-                        Text("成功 \(gmFullDateTime(store.lastSuccess[kind]))")
-                            .font(.system(size: 10.5))
-                            .monospacedDigit()
+                    Text(holdings.isEmpty ? "去录入" : "查看详情")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.gold)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(Theme.gold)
+                }
+
+                if holdings.isEmpty {
+                    Text("录入成本价与克数后，这里会实时显示你的浮动盈亏")
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(Theme.secondary)
+                } else {
+                    HStack(spacing: 0) {
+                        dashMetric("持仓成本", gmNumber(summary.cost), Theme.text)
+                        dashMetric("当前市值", gmNumber(summary.marketValue), Theme.text)
+                        dashMetric("浮动盈亏", gmSigned(summary.profit), Theme.priceColor(summary.profit))
+                        dashMetric("收益率", gmPercent(summary.profitPercent), Theme.priceColor(summary.profit))
+                    }
+                    if summary.hasUnpriced {
+                        Text("\(summary.pricedCount)/\(summary.totalCount) 笔已获取行情")
+                            .font(.system(size: 10))
                             .foregroundStyle(Theme.muted)
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .gmCard(padding: 16)
+            .contentShape(Rectangle())
         }
-        .gmCard(padding: 16)
+        .buttonStyle(.plain)
+    }
+
+    private func dashMetric(_ title: String, _ value: String, _ color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(.system(size: 10.5))
+                .foregroundStyle(Theme.secondary)
+            Text(value)
+                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var statusBar: some View {
+        HStack(spacing: 14) {
+            ForEach(GoldQuote.Kind.allCases) { kind in
+                HStack(spacing: 6) {
+                    StatusBadge(kind: kind)
+                    Text(kind.shortName)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.secondary)
+                }
+            }
+            Spacer(minLength: 8)
+            if let error = store.errors.values.first {
+                Text(error)
+                    .font(.system(size: 10))
+                    .foregroundStyle(Theme.up)
+                    .lineLimit(1)
+            } else {
+                Text("刷新间隔 \(store.settings.refreshInterval)s · \(store.settings.autoRefresh ? "自动刷新" : "手动刷新")")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Theme.muted)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 4)
     }
 }

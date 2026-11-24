@@ -79,9 +79,11 @@ struct QuoteCard: View {
                 }
             }
 
+            tradeBar
+
             Divider().background(Theme.border)
 
-            PriceChart(points: points, height: 78)
+            PriceChart(points: points, height: 110)
 
             HStack {
                 if let error = store.errors[kind] {
@@ -104,6 +106,31 @@ struct QuoteCard: View {
             }
         }
         .gmCard()
+    }
+
+    private var tradeBar: some View {
+        let leftTitle = kind == .icbc ? "主动积存" : "买价"
+        let rightTitle = kind == .icbc ? "赎回价" : "卖价"
+        return HStack(spacing: 0) {
+            tradeCell(leftTitle, gmNumber(quote?.bid))
+            tradeCell(rightTitle, gmNumber(quote?.ask))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(Theme.panelElevated, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private func tradeCell(_ title: String, _ value: String) -> some View {
+        VStack(spacing: 3) {
+            Text(title)
+                .font(.system(size: 10))
+                .foregroundStyle(Theme.secondary)
+            Text(value)
+                .font(.system(size: 13, weight: .semibold))
+                .monospacedDigit()
+                .foregroundStyle(Theme.text)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
