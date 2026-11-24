@@ -11,7 +11,12 @@ final class MarketStore: ObservableObject {
     @Published var settings: AppSettings {
         didSet {
             settings.save()
-            restartTimer()
+            // 只有影响定时器的设置变更才重建定时器。
+            // 关通知 / 切外观也重建的话会 cancel 正在进行的刷新，写成 "cancelled" 错误态。
+            if settings.autoRefresh != oldValue.autoRefresh ||
+                settings.refreshInterval != oldValue.refreshInterval {
+                restartTimer()
+            }
             if settings.notificationsEnabled && !oldValue.notificationsEnabled {
                 Task { try? await notificationService.requestAuthorization() }
             }
@@ -99,6 +104,9 @@ final class MarketStore: ObservableObject {
             lastSuccess[kind] = quote.fetchedAt
             errors[kind] = nil
         case .failure(let error):
+            // 主动取消（关闭自动刷新 / 退出应用）不是行情源故障，不写错误态。
+            if let urlError = error as? URLError, urlError.code == .cancelled { return }
+            if error is CancellationError { return }
             errors[kind] = error.localizedDescription
         }
     }
@@ -137,7 +145,9 @@ final class MarketStore: ObservableObject {
         timerTask = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: nanoseconds)
-                await self?.refresh()
+                guard !Task.isCancelled else { return }
+                // 刷新放到独立 Task，避免定时器被取消时连带取消正在进行的网络请求。
+                Task { await self?.refresh() }
             }
         }
     }
