@@ -1,12 +1,18 @@
 import SwiftUI
 import SwiftData
 
+/// sheet(item:) 的呈现目标：holding 为 nil 表示新增，非 nil 表示编辑。
+/// 用 Identifiable 单状态驱动，避免 isPresented + 外部 target 双状态导致的时序竞态。
+private struct EditorTarget: Identifiable {
+    let id = UUID()
+    let holding: GoldHolding?
+}
+
 struct HoldingsView: View {
     @EnvironmentObject private var store: MarketStore
     @Environment(\.modelContext) private var context
     @Query(sort: \GoldHolding.createdAt, order: .reverse) private var holdings: [GoldHolding]
-    @State private var editorTarget: GoldHolding?
-    @State private var showingEditor = false
+    @State private var editorTarget: EditorTarget?
 
     private var summary: HoldingSummary {
         HoldingSummary.make(holdings, quotes: store.quotes)
@@ -25,8 +31,7 @@ struct HoldingsView: View {
                 }
                 Spacer()
                 Button {
-                    editorTarget = nil
-                    showingEditor = true
+                    editorTarget = EditorTarget(holding: nil)
                 } label: {
                     Label("添加持仓", systemImage: "plus")
                         .font(.system(size: 12, weight: .medium))
@@ -66,8 +71,8 @@ struct HoldingsView: View {
         .padding(26)
         .background(Theme.background)
         .tint(Theme.gold)
-        .sheet(isPresented: $showingEditor) {
-            HoldingEditorView(existing: editorTarget)
+        .sheet(item: $editorTarget) { target in
+            HoldingEditorView(existing: target.holding)
                 .environment(\.modelContext, context)
         }
     }
@@ -155,24 +160,64 @@ struct HoldingsView: View {
                 }
             }
 
-            Button {
-                editorTarget = holding
-                showingEditor = true
-            } label: {
-                Image(systemName: "pencil")
-            }
-            .buttonStyle(.borderless)
-            .foregroundStyle(Theme.secondary)
+            HStack(spacing: 8) {
+                IconActionButton(
+                    icon: "pencil",
+                    tint: Theme.gold,
+                    fill: Theme.gold.opacity(0.10),
+                    border: Theme.gold.opacity(0.28),
+                    help: "编辑持仓"
+                ) {
+                    editorTarget = EditorTarget(holding: holding)
+                }
 
-            Button(role: .destructive) {
-                context.delete(holding)
-                try? context.save()
-            } label: {
-                Image(systemName: "trash")
+                IconActionButton(
+                    icon: "trash",
+                    tint: Theme.up,
+                    fill: Theme.up.opacity(0.08),
+                    border: Theme.up.opacity(0.24),
+                    help: "删除持仓"
+                ) {
+                    context.delete(holding)
+                    try? context.save()
+                }
             }
-            .buttonStyle(.borderless)
         }
         .gmCard(padding: 14)
+    }
+}
+
+/// 持仓行的图标操作按钮：统一尺寸与圆角，hover 时底色/描边增强 + 轻微放大。
+private struct IconActionButton: View {
+    let icon: String
+    let tint: Color
+    let fill: Color
+    let border: Color
+    let help: String
+    let action: () -> Void
+
+    @State private var hovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(tint)
+                .frame(width: 30, height: 30)
+                .background(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(fill.opacity(hovered ? 1.8 : 1))
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .strokeBorder(border.opacity(hovered ? 1.6 : 1), lineWidth: 1)
+                }
+                .scaleEffect(hovered ? 1.06 : 1)
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .onHover { hovered = $0 }
+        .animation(.easeOut(duration: 0.12), value: hovered)
     }
 }
 
@@ -187,6 +232,19 @@ struct HoldingEditorView: View {
     @State private var hasPurchaseDate = false
     @State private var purchasedAt = Date()
     @State private var validation: String?
+
+    init(existing: GoldHolding?) {
+        self.existing = existing
+        // 在 init 中预填状态，而不是依赖 onAppear：sheet 复用/呈现时序不影响数据。
+        if let existing {
+            _kind = State(initialValue: existing.kind)
+            _costPrice = State(initialValue: gmAmount(existing.costPrice))
+            _grams = State(initialValue: gmAmount(existing.grams))
+            _note = State(initialValue: existing.note)
+            _hasPurchaseDate = State(initialValue: existing.purchasedAt != nil)
+            _purchasedAt = State(initialValue: existing.purchasedAt ?? Date())
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -274,17 +332,6 @@ struct HoldingEditorView: View {
         .frame(width: 470)
         .background(Theme.background)
         .tint(Theme.gold)
-        .onAppear {
-            guard let existing else { return }
-            kind = existing.kind
-            costPrice = gmAmount(existing.costPrice)
-            grams = gmAmount(existing.grams)
-            note = existing.note
-            if let date = existing.purchasedAt {
-                hasPurchaseDate = true
-                purchasedAt = date
-            }
-        }
     }
 
     private var rowDivider: some View {
