@@ -62,6 +62,7 @@ struct MenuBarView: View {
         .frame(width: 292, alignment: .leading)
         .background(Theme.panel)
         .tint(Theme.gold)
+        .environment(\.colorScheme, .dark)
     }
 
     private func quoteLine(_ kind: GoldQuote.Kind) -> some View {
