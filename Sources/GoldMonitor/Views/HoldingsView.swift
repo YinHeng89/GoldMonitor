@@ -189,42 +189,70 @@ struct HoldingEditorView: View {
     @State private var validation: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 18) {
             Text(existing == nil ? "添加持仓" : "编辑持仓")
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(Theme.text)
 
-            Form {
-                Picker("品种", selection: $kind) {
-                    ForEach(GoldQuote.Kind.allCases) { item in
-                        Text(item.displayName).tag(item)
+            VStack(spacing: 0) {
+                editorRow("品种") {
+                    Picker("", selection: $kind) {
+                        ForEach(GoldQuote.Kind.allCases) { item in
+                            Text(item.displayName).tag(item)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(width: 250, alignment: .leading)
+                }
+                rowDivider
+                editorRow("成本价") {
+                    HStack(spacing: 8) {
+                        editorField("例如 760.00", text: $costPrice, width: 150)
+                        Text("元/克")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.secondary)
+                            .frame(width: 42, alignment: .leading)
                     }
                 }
-                HStack {
-                    Text("成本价")
-                    Spacer(minLength: 12)
-                    TextField("例如 760.00", text: $costPrice)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 150)
-                    Text("元/克").foregroundStyle(Theme.secondary)
+                rowDivider
+                editorRow("持仓克数") {
+                    HStack(spacing: 8) {
+                        editorField("例如 100", text: $grams, width: 150)
+                        Text("克")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.secondary)
+                            .frame(width: 42, alignment: .leading)
+                    }
                 }
-                HStack {
-                    Text("持仓克数")
-                    Spacer(minLength: 12)
-                    TextField("例如 100", text: $grams)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 150)
-                    Text("克").foregroundStyle(Theme.secondary)
+                rowDivider
+                editorRow("记录购买日期") {
+                    Toggle("", isOn: $hasPurchaseDate)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .frame(width: 44, alignment: .leading)
                 }
-                Toggle("记录购买日期", isOn: $hasPurchaseDate)
                 if hasPurchaseDate {
-                    DatePicker("购买日期", selection: $purchasedAt, displayedComponents: .date)
+                    rowDivider
+                    editorRow("购买日期") {
+                        DatePicker("", selection: $purchasedAt, displayedComponents: .date)
+                            .labelsHidden()
+                            .datePickerStyle(.compact)
+                            .frame(width: 250, alignment: .leading)
+                    }
                 }
-                TextField("备注（可选）", text: $note)
-                    .textFieldStyle(.roundedBorder)
+                rowDivider
+                editorRow("备注（可选）") {
+                    editorField("可填写购买渠道等信息", text: $note, width: 250)
+                }
             }
-            .formStyle(.grouped)
-            .frame(minHeight: 230)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Theme.panel, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(Theme.border, lineWidth: 1)
+            }
 
             if let validation {
                 Text(validation)
@@ -232,7 +260,7 @@ struct HoldingEditorView: View {
                     .foregroundStyle(Theme.up)
             }
 
-            HStack {
+            HStack(spacing: 10) {
                 Spacer()
                 Button("取消") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -257,6 +285,28 @@ struct HoldingEditorView: View {
                 purchasedAt = date
             }
         }
+    }
+
+    private var rowDivider: some View {
+        Divider()
+            .foregroundStyle(Theme.border)
+            .padding(.leading, 104)
+    }
+
+    private func editorRow(_ label: String, @ViewBuilder control: () -> some View) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.text)
+                .frame(width: 92, alignment: .leading)
+            control()
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(height: 42)
+    }
+
+    private func editorField(_ placeholder: String, text: Binding<String>, width: CGFloat) -> some View {
+        EditorField(placeholder: placeholder, text: text, width: width)
     }
 
     private func save() {
@@ -287,6 +337,29 @@ struct HoldingEditorView: View {
         }
         try? context.save()
         dismiss()
+    }
+}
+
+/// 自绘输入框：避免 Form 把 prompt 挤到框外，且焦点环跟随主题金色而非系统蓝。
+private struct EditorField: View {
+    let placeholder: String
+    @Binding var text: String
+    let width: CGFloat
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        TextField("", text: $text, prompt: Text(placeholder).foregroundStyle(Theme.muted))
+            .textFieldStyle(.plain)
+            .focused($focused)
+            .font(.system(size: 13))
+            .foregroundStyle(Theme.text)
+            .padding(.horizontal, 10)
+            .frame(width: width, height: 30, alignment: .leading)
+            .background(Theme.panelElevated, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .strokeBorder(focused ? Theme.gold : Theme.border, lineWidth: focused ? 1.5 : 1)
+            }
     }
 }
 
