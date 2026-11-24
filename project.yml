@@ -12,19 +12,18 @@ settings:
     ENABLE_TESTABILITY: YES
     CLANG_ENABLE_MODULES: YES
     OTHER_SWIFT_FLAGS: "$(inherited) -disable-sandbox"
-    GENERATE_INFOPLIST_FILE: YES
+    GENERATE_INFOPLIST_FILE: NO
 targets:
   GoldMonitor:
     type: application
     platform: macOS
     sources:
       - path: Sources/GoldMonitor
+      - path: Resources/AppIcon.icns
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.goldmonitor.app
-        INFOPLIST_KEY_CFBundleDisplayName: Gold Monitor
-        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.finance
-        INFOPLIST_KEY_NSHumanReadableCopyright: Gold Monitor
+        INFOPLIST_FILE: Resources/Info.plist
   GoldMonitorTests:
     type: bundle.unit-test
     platform: macOS
