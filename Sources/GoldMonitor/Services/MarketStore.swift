@@ -10,7 +10,7 @@ final class MarketStore: ObservableObject {
     @Published private(set) var isRefreshing = false
     @Published var settings: AppSettings {
         didSet {
-            oldValue.save()
+            settings.save()
             restartTimer()
             if settings.notificationsEnabled && !oldValue.notificationsEnabled {
                 Task { try? await notificationService.requestAuthorization() }
