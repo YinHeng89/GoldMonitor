@@ -120,11 +120,11 @@ struct HoldingsView: View {
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 5) {
-                Text("\(holding.kind.shortName) · \(gmNumber(holding.grams)) 克")
+                Text("\(holding.kind.shortName) · \(gmAmount(holding.grams)) 克")
                     .font(.system(size: 13.5, weight: .semibold))
                     .foregroundStyle(Theme.text)
                 HStack(spacing: 10) {
-                    Text("成本 \(gmNumber(holding.costPrice)) \(holding.kind.unit)")
+                    Text("成本 \(gmAmount(holding.costPrice)) \(holding.kind.unit)")
                     if let date = holding.purchasedAt {
                         Text("购入 \(gmDate(date))")
                     }
@@ -277,8 +277,8 @@ struct HoldingEditorView: View {
         .onAppear {
             guard let existing else { return }
             kind = existing.kind
-            costPrice = String(format: "%.2f", existing.costPrice)
-            grams = "\(existing.grams)"
+            costPrice = gmAmount(existing.costPrice)
+            grams = gmAmount(existing.grams)
             note = existing.note
             if let date = existing.purchasedAt {
                 hasPurchaseDate = true

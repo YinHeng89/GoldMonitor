@@ -69,6 +69,15 @@ func gmNumber(_ value: Double?, digits: Int = 2) -> String {
     return String(format: "%.\(digits)f", value)
 }
 
+/// 用户输入量（克数、成本价）：最多保留 6 位小数并去掉尾随 0，
+/// 不像 gmNumber 固定 2 位那样把 1.3940 显示成 1.39。
+func gmAmount(_ value: Double?) -> String {
+    guard let value, value.isFinite else { return "--" }
+    if value == value.rounded() { return String(format: "%.0f", value) }
+    return String(format: "%.6f", value)
+        .replacingOccurrences(of: "0+$", with: "", options: .regularExpression)
+}
+
 func gmSigned(_ value: Double?, digits: Int = 2) -> String {
     guard let value, value.isFinite else { return "--" }
     return String(format: "%+.\(digits)f", value)

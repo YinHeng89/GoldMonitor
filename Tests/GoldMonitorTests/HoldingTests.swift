@@ -107,4 +107,11 @@ final class HoldingTests: XCTestCase {
         XCTAssertNil(summary.profitPercent)
         XCTAssertFalse(summary.hasUnpriced)
     }
+
+    func testAmountFormattingKeepsUserPrecision() {
+        XCTAssertEqual(gmAmount(1.394), "1.394")
+        XCTAssertEqual(gmAmount(100), "100")
+        XCTAssertEqual(gmAmount(780.45), "780.45")
+        XCTAssertEqual(gmAmount(nil), "--")
+    }
 }
