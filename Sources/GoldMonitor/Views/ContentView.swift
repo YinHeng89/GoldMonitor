@@ -81,6 +81,14 @@ struct ContentView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
             }
+            .background {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        Color(nsColor: NSColor(hex: 0x141922)).opacity(0.42)
+                    }
+                    .ignoresSafeArea()
+            }
             .navigationTitle("Gold Monitor")
             .frame(minWidth: 190)
         } detail: {
