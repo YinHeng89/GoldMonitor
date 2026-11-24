@@ -1,0 +1,37 @@
+name: GoldMonitor
+options:
+  bundleIdPrefix: com.goldmonitor
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGNING_ALLOWED: NO
+    ENABLE_TESTABILITY: YES
+    CLANG_ENABLE_MODULES: YES
+    OTHER_SWIFT_FLAGS: "$(inherited) -disable-sandbox"
+    GENERATE_INFOPLIST_FILE: YES
+targets:
+  GoldMonitor:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/GoldMonitor
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.goldmonitor.app
+        INFOPLIST_KEY_CFBundleDisplayName: Gold Monitor
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.finance
+        INFOPLIST_KEY_NSHumanReadableCopyright: Gold Monitor
+  GoldMonitorTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/GoldMonitorTests
+    dependencies:
+      - target: GoldMonitor
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.goldmonitor.tests
