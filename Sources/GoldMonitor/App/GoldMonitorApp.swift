@@ -10,7 +10,7 @@ struct GoldMonitorApp: App {
     init() {
         let container: ModelContainer
         do {
-            container = try ModelContainer(for: PriceSnapshot.self, PriceAlert.self)
+            container = try ModelContainer(for: PriceSnapshot.self, PriceAlert.self, GoldHolding.self)
         } catch {
             fatalError("SwiftData 容器创建失败: \(error.localizedDescription)")
         }

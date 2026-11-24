@@ -4,6 +4,7 @@ enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
     case overview
     case london
     case icbc
+    case holdings
     case alerts
     case history
     case settings
@@ -15,6 +16,7 @@ enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
         case .overview: return "总览"
         case .london: return "伦敦金"
         case .icbc: return "工行积存金"
+        case .holdings: return "我的持仓"
         case .alerts: return "价格预警"
         case .history: return "历史记录"
         case .settings: return "系统设置"
@@ -26,6 +28,7 @@ enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
         case .overview: return "square.grid.2x2"
         case .london: return "globe.americas"
         case .icbc: return "banknote"
+        case .holdings: return "briefcase"
         case .alerts: return "bell.badge"
         case .history: return "clock.arrow.circlepath"
         case .settings: return "gearshape"
@@ -100,6 +103,7 @@ struct ContentView: View {
         case .overview: DashboardView()
         case .london: QuoteDetailView(kind: .london)
         case .icbc: QuoteDetailView(kind: .icbc)
+        case .holdings: HoldingsView()
         case .alerts: AlertView()
         case .history: HistoryView()
         case .settings: SettingsView()
