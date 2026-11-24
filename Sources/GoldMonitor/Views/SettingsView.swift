@@ -3,6 +3,9 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject private var store: MarketStore
 
+    private let labelWidth: CGFloat = 92
+    private let controlWidth: CGFloat = 400
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -13,24 +16,25 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     settingHeader("行情刷新", icon: "timer")
                     settingRow("刷新间隔") {
-                        Picker("", selection: Binding(
+                        Picker(selection: Binding(
                             get: { store.settings.refreshInterval },
                             set: { store.settings.refreshInterval = $0 }
                         )) {
                             ForEach([15, 30, 60, 120, 300], id: \.self) { second in
                                 Text("\(second) 秒").tag(second)
                             }
-                        }
+                        } label: { EmptyView() }
+                        .labelsHidden()
                         .pickerStyle(.segmented)
-                        .frame(width: 360)
                     }
                     settingRow("自动刷新") {
-                        Toggle("", isOn: Binding(
+                        Toggle(isOn: Binding(
                             get: { store.settings.autoRefresh },
                             set: { store.settings.autoRefresh = $0 }
-                        ))
-                        .toggleStyle(.switch)
+                        )) { EmptyView() }
                         .labelsHidden()
+                        .toggleStyle(.switch)
+                        .frame(width: 44, alignment: .leading)
                     }
                     settingRow("连接测试") {
                         Button {
@@ -42,6 +46,7 @@ struct SettingsView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                         .disabled(store.isRefreshing)
+                        .frame(width: 180, alignment: .leading)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -50,12 +55,13 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     settingHeader("通知与外观", icon: "paintbrush")
                     settingRow("系统通知") {
-                        Toggle("", isOn: Binding(
+                        Toggle(isOn: Binding(
                             get: { store.settings.notificationsEnabled },
                             set: { store.settings.notificationsEnabled = $0 }
-                        ))
-                        .toggleStyle(.switch)
+                        )) { EmptyView() }
                         .labelsHidden()
+                        .toggleStyle(.switch)
+                        .frame(width: 44, alignment: .leading)
                     }
                     settingRow("通知权限") {
                         Button("重新请求通知权限") {
@@ -64,18 +70,19 @@ struct SettingsView: View {
                         .font(.system(size: 11.5))
                         .buttonStyle(.bordered)
                         .controlSize(.small)
+                        .frame(width: 180, alignment: .leading)
                     }
                     settingRow("外观") {
-                        Picker("", selection: Binding(
+                        Picker(selection: Binding(
                             get: { store.settings.appearance },
                             set: { store.settings.appearance = $0 }
                         )) {
                             ForEach(AppSettings.Appearance.allCases, id: \.self) { item in
                                 Text(item.displayName).tag(item)
                             }
-                        }
+                        } label: { EmptyView() }
+                        .labelsHidden()
                         .pickerStyle(.segmented)
-                        .frame(width: 360)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -84,15 +91,16 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     settingHeader("数据源", icon: "network")
                     settingRow("伦敦金来源") {
-                        Picker("", selection: Binding(
+                        Picker(selection: Binding(
                             get: { store.settings.londonProvider },
                             set: { store.settings.londonProvider = $0 }
                         )) {
                             ForEach(AppSettings.LondonProvider.allCases, id: \.self) { item in
                                 Text(item.displayName).tag(item)
                             }
-                        }
-                        .frame(width: 360, alignment: .leading)
+                        } label: { EmptyView() }
+                        .labelsHidden()
+                        .frame(width: 400, alignment: .leading)
                     }
                     Text("FX168 为规划文档指定来源，但当前网络不可达且页面结构可能变化；失败时会明确显示错误，不会把旧数据标为实时。")
                         .font(.system(size: 10.5))
@@ -147,12 +155,13 @@ struct SettingsView: View {
     }
 
     private func settingRow<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        HStack(alignment: .center, spacing: 16) {
+        HStack(alignment: .center, spacing: 0) {
             Text(title)
                 .font(.system(size: 12.5))
                 .foregroundStyle(Theme.secondary)
-                .frame(width: 80, alignment: .leading)
+                .frame(width: labelWidth, alignment: .leading)
             content()
+                .frame(width: controlWidth, alignment: .leading)
             Spacer(minLength: 0)
         }
     }
