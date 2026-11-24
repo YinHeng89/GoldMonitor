@@ -12,143 +12,117 @@ struct MenuBarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // 标题
             HStack(spacing: 6) {
                 Image(systemName: "banknote.fill")
+                    .font(.system(size: 12))
                     .foregroundStyle(Theme.gold)
                 Text("Gold Monitor")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.gold)
-                Spacer(minLength: 12)
-                Text("实时行情")
+                Spacer(minLength: 8)
+                Text(timeLabel)
                     .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.bottom, 8)
-
-            Divider()
-
-            // 两个品种：名称 + 金色价格 + 涨跌
-            ForEach(GoldQuote.Kind.allCases) { kind in
-                quoteRow(kind)
-            }
-
-            // 持仓盈亏（有持仓才显示）
-            if !holdings.isEmpty {
-                Divider()
-                holdingRow
+                    .foregroundStyle(Theme.muted)
             }
 
             Divider()
+                .background(Theme.border)
+                .padding(.vertical, 8)
 
-            // 更新时间合并为一行
-            updateRow
+            VStack(spacing: 7) {
+                quoteLine(.london)
+                quoteLine(.icbc)
+                if !holdings.isEmpty { holdingLine }
+            }
 
             Divider()
+                .background(Theme.border)
+                .padding(.vertical, 8)
 
-            // 操作区
-            VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 10) {
                 Button {
                     openWindow(id: "main")
                     NSApp.activate(ignoringOtherApps: true)
                 } label: {
-                    Label("打开主窗口", systemImage: "macwindow")
+                    Label("主窗口", systemImage: "macwindow")
                 }
                 Button {
                     Task { await store.refresh() }
                 } label: {
-                    Label("立即刷新", systemImage: "arrow.clockwise")
+                    Label("刷新", systemImage: "arrow.clockwise")
                 }
                 .disabled(store.isRefreshing)
+                Spacer(minLength: 4)
+                Button("退出") { NSApp.terminate(nil) }
             }
-            .padding(.vertical, 4)
-
-            Divider()
-
-            Button("退出 Gold Monitor") {
-                NSApp.terminate(nil)
-            }
+            .buttonStyle(.borderless)
+            .font(.system(size: 11))
         }
+        .padding(12)
+        .frame(width: 292, alignment: .leading)
+        .background(Theme.panel)
         .tint(Theme.gold)
     }
 
-    private func quoteRow(_ kind: GoldQuote.Kind) -> some View {
+    private func quoteLine(_ kind: GoldQuote.Kind) -> some View {
         let quote = store.quotes[kind]
         let failed = store.errors[kind] != nil
-        let change = quote?.changeValue
         let ratio = quote?.changeRatio
-        return VStack(alignment: .leading, spacing: 3) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Circle()
-                    .fill(failed ? Theme.muted : Theme.gold)
-                    .frame(width: 6, height: 6)
-                Text(kind.shortName)
-                    .font(.system(size: 11.5, weight: .medium))
-                Spacer(minLength: 10)
-                if failed {
-                    Text("获取失败")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.up)
-                } else {
-                    Text(gmNumber(quote?.price))
-                        .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Theme.gold)
-                    Text(kind.unit)
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                }
-            }
-            if !failed {
-                Group {
-                    if change != nil {
-                        HStack(spacing: 8) {
-                            Text(gmSigned(change))
-                            Text(gmPercent(ratio))
-                        }
-                        .foregroundStyle(Theme.priceColor(change))
-                    } else {
-                        Text("涨跌 --")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .font(.system(size: 10.5, design: .monospaced))
-                .padding(.leading, 12)
+        return HStack(spacing: 6) {
+            Circle()
+                .fill(failed ? Theme.muted : Theme.gold)
+                .frame(width: 5, height: 5)
+            Text(kind.shortName)
+                .font(.system(size: 11.5, weight: .medium))
+                .foregroundStyle(Theme.text)
+                .frame(width: 42, alignment: .leading)
+            if failed {
+                Text("获取失败")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(Theme.up)
+            } else {
+                Text(gmNumber(quote?.price))
+                    .font(.system(size: 12.5, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Theme.gold)
+                Text(kind.unit)
+                    .font(.system(size: 9))
+                    .foregroundStyle(Theme.muted)
+                Spacer(minLength: 4)
+                Text(ratio == nil ? "--" : gmPercent(ratio))
+                    .font(.system(size: 10.5, design: .monospaced))
+                    .foregroundStyle(Theme.priceColor(ratio))
             }
         }
-        .padding(.vertical, 5)
     }
 
-    private var holdingRow: some View {
-        HStack(spacing: 8) {
-            Text("持仓盈亏")
-                .font(.system(size: 11.5))
-            Spacer(minLength: 10)
+    private var holdingLine: some View {
+        HStack(spacing: 6) {
+            Text("持仓")
+                .font(.system(size: 11.5, weight: .medium))
+                .foregroundStyle(Theme.text)
+                .frame(width: 42, alignment: .leading)
             if summary.pricedCount > 0 {
                 Text(gmSigned(summary.profit))
                     .foregroundStyle(Theme.priceColor(summary.profit))
+                Spacer(minLength: 4)
                 Text(gmPercent(summary.profitPercent))
+                    .font(.system(size: 10.5, design: .monospaced))
                     .foregroundStyle(Theme.priceColor(summary.profit))
             } else {
                 Text("待行情")
                     .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.muted)
             }
         }
         .font(.system(size: 11.5, weight: .medium, design: .monospaced))
-        .padding(.vertical, 5)
+        .padding(.leading, 11)
     }
 
-    private var updateRow: some View {
+    private var timeLabel: String {
         let times = [store.lastSuccess[.london], store.lastSuccess[.icbc]].compactMap { $0 }
-        let label: String = {
-            guard let earliest = times.min() else { return "尚未获取行情" }
-            let formatter = DateFormatter()
-            formatter.dateFormat = "HH:mm:ss"
-            return "更新于 \(formatter.string(from: earliest))"
-        }()
-        return Text(label)
-            .font(.system(size: 10))
-            .foregroundStyle(.secondary)
-            .padding(.vertical, 4)
+        guard let earliest = times.min() else { return "--:--:--" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter.string(from: earliest)
     }
 }

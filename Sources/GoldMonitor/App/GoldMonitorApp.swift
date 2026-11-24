@@ -39,7 +39,7 @@ struct GoldMonitorApp: App {
                 Image(systemName: "banknote")
             }
         }
-        .menuBarExtraStyle(.menu)
+        .menuBarExtraStyle(.window)
     }
 }
 
