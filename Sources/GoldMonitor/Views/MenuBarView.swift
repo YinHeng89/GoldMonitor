@@ -60,7 +60,14 @@ struct MenuBarView: View {
         }
         .padding(12)
         .frame(width: 292, alignment: .leading)
-        .background(Theme.panel)
+        .background {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Theme.background.opacity(0.48))
+                }
+        }
         .tint(Theme.gold)
         .environment(\.colorScheme, .dark)
     }
