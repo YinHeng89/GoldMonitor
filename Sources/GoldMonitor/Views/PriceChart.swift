@@ -6,6 +6,15 @@ struct PriceChart: View {
     var height: CGFloat = 180
     var showAxis: Bool = false
 
+    // Swift Charts 默认 Y 轴会把 0 纳入范围，几块钱的波动会被压成一条直线。
+    // 按当前数据的最小/最大值上下留 15% 边距，波动才会被看见。
+    private var yDomain: ClosedRange<Double> {
+        guard let low = points.map(\.price).min(),
+              let high = points.map(\.price).max() else { return 0...1 }
+        let padding = max((high - low) * 0.15, 0.02)
+        return (low - padding)...(high + padding)
+    }
+
     var body: some View {
         Group {
             if points.count < 2 {
@@ -31,6 +40,7 @@ struct PriceChart: View {
                         .symbolSize(0)
                     }
                 }
+                .chartYScale(domain: yDomain)
                 .chartXAxis(showAxis ? .automatic : .hidden)
                 .chartYAxis(showAxis ? .automatic : .hidden)
                 .chartLegend(.hidden)
